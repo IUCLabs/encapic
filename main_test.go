@@ -92,7 +92,7 @@ func TestFetchTimeout(t *testing.T) {
 	client := &http.Client{Timeout: 20 * time.Millisecond}
 	resp, err := client.Get(srv.URL + "/cblr/svc/op/puppet/hostname/host.example")
 	if err == nil {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		t.Fatalf("expected timeout error, got none")
 	}
 }
@@ -119,7 +119,9 @@ func TestRunVersion(t *testing.T) {
 
 func TestDefaultBaseURLCompiledIn(t *testing.T) {
 	// Guard against accidental changes to the in-cluster default.
-	os.Unsetenv("ENCAPI_URL")
+	if err := os.Unsetenv("ENCAPI_URL"); err != nil {
+		t.Fatalf("unsetenv: %v", err)
+	}
 	if defaultBaseURL != "http://encapi.encapi.svc.cluster.local" {
 		t.Errorf("defaultBaseURL = %q", defaultBaseURL)
 	}

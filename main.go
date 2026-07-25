@@ -55,8 +55,8 @@ func main() {
 // non-nil error on any failure.
 func run(args []string, out io.Writer) error {
 	if len(args) == 2 && (args[1] == "-v" || args[1] == "--version") {
-		fmt.Fprintf(out, "encapic %s\n", version)
-		return nil
+		_, err := fmt.Fprintf(out, "encapic %s\n", version)
+		return err
 	}
 	if len(args) != 2 {
 		return fmt.Errorf("usage: %s <certname>", args[0])
@@ -95,7 +95,7 @@ func fetch(baseURL, certname string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("request %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
