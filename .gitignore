@@ -1,0 +1,5 @@
+# built binary (repo root)
+/encapic
+# cross-compiled artifacts (e.g. encapic_linux_amd64)
+/encapic_*
+dist/
