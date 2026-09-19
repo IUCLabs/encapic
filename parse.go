@@ -81,6 +81,10 @@ func parseClasses(lines []string, i int, inline string) ([]string, int, error) {
 	}
 
 	var classes []string
+	// Entries of the block sit at one indentation level. A class's value may
+	// itself be a nested block (class parameters, which encapi emits keyed by
+	// role name), whose deeper lines are values, not class names.
+	entryIndent := -1
 	j := i + 1
 	for ; j < len(lines); j++ {
 		line := lines[j]
@@ -88,17 +92,22 @@ func parseClasses(lines []string, i int, inline string) ([]string, int, error) {
 			continue
 		}
 		trimmed := strings.TrimSpace(line)
+		indent := len(line) - len(strings.TrimLeft(line, " \t"))
+		// An unindented, non-list line is the next top-level key, so stop.
+		if indent == 0 && !strings.HasPrefix(trimmed, "-") {
+			break
+		}
+		if entryIndent < 0 {
+			entryIndent = indent
+		}
+		if indent > entryIndent {
+			continue
+		}
 		if strings.HasPrefix(trimmed, "- ") || trimmed == "-" {
 			// Block list form, at either the parent indent ("- roles::base",
 			// as yaml.dump emits) or nested ("    - roles::base").
 			classes = append(classes, unquote(strings.TrimSpace(trimmed[1:])))
 			continue
-		}
-		// An indented, non-list line is a nested map entry belonging to
-		// classes ("    roles::base: {}"). An unindented, non-list line is the
-		// next top-level key, so stop.
-		if line[0] != ' ' && line[0] != '\t' {
-			break
 		}
 		name, _, ok := splitKV(trimmed)
 		if !ok {

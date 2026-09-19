@@ -1,0 +1,13 @@
+#!/bin/sh
+# Puppet's exec node_terminus invokes external_nodes with a certname and no
+# environment, so the encapi URL cannot be inherited; source it here instead.
+set -eu
+
+if [ -r /etc/encapic/encapic.conf ]; then
+	. /etc/encapic/encapic.conf
+fi
+if [ -n "${ENCAPI_URL:-}" ]; then
+	export ENCAPI_URL
+fi
+
+exec /usr/bin/encapic "$@"

@@ -5,7 +5,7 @@ GOFLAGS := -ldflags="-s -w -X main.version=$(VERSION)"
 OS      ?= $(shell go env GOOS)
 ARCH    ?= $(shell go env GOARCH)
 
-.PHONY: all build test lint fmt clean install patch minor major _tag
+.PHONY: all build test lint fmt pre-commit clean install rpm rpm-package patch minor major _tag
 
 all: build
 
@@ -22,11 +22,23 @@ lint:
 fmt:
 	gofmt -w .
 
+pre-commit:
+	uvx pre-commit run --all-files
+
 clean:
 	rm -rf $(DIST) $(BINARY)
 
 install:
 	go install $(GOFLAGS) .
+
+# Build every release artifact locally without publishing: the raw binary the
+# puppet compilers fetch, and the RPM the VM masters install.
+rpm: rpm-package
+
+# goreleaser drives the build and the nfpm packaging in one pass, so packaging
+# an already-built binary is not a separate step.
+rpm-package:
+	goreleaser release --snapshot --clean
 
 # Bump helpers — read the latest semver tag and create the next one.
 # If no tag exists yet, start from v0.0.0.
