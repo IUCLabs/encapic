@@ -1,0 +1,79 @@
+version: 2
+
+project_name: encapic
+
+builds:
+  - id: encapic
+    main: .
+    binary: encapic
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  # Raw binary, not an archive: the puppetserver-compiler initContainer fetches
+  # this exact asset name by URL and sha256-verifies it before installing it.
+  - id: binaries
+    ids: [encapic]
+    formats: [binary]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+
+nfpms:
+  - id: encapic
+    ids: [encapic]
+    package_name: encapic
+    # encapic-<version>-1.x86_64.rpm
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: myorg
+    homepage: https://github.com/IUCLabs/encapic
+    maintainer: Ben Vincent <12552114+neoloc@users.noreply.github.com>
+    description: Puppet exec ENC client for encapi
+    license: MIT
+    formats:
+      - rpm
+    release: "1"
+    bindir: /usr/bin
+    contents:
+      # Puppet's exec node_terminus passes a certname and no environment, so
+      # external_nodes points at this shim, which sources the URL first.
+      - src: packaging/encapic-enc
+        dst: /usr/bin/encapic-enc
+        file_info:
+          mode: 0755
+      # noreplace: puppet manages this file's contents (hiera-driven URL), so an
+      # upgrade must not overwrite it.
+      - src: packaging/encapic.conf
+        dst: /etc/encapic/encapic.conf
+        type: "config|noreplace"
+        file_info:
+          mode: 0644
+
+checksum:
+  # One <artifact>.sha256 per file rather than a single checksums.txt: the
+  # compiler initContainer fetches encapic_linux_amd64.sha256 next to the binary.
+  split: true
+  name_template: "{{ .ArtifactName }}.sha256"
+
+release:
+  gitea:
+    owner: myorg
+    name: encapic
+
+gitea_urls:
+  api: https://git.example.com/api/v1
+  download: https://git.example.com
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"

@@ -69,8 +69,33 @@ make build   # static binary into dist/
 make test    # go test -v -race ./...
 make lint    # golangci-lint
 make fmt     # gofmt -w .
+make rpm     # binary + RPM into dist/ via goreleaser, publishing nothing
 ```
 
 Release: `make minor` (etc.) tags `vX.Y.Z` and pushes it; the `release`
-Woodpecker pipeline builds `encapic_linux_amd64` (+ `.sha256`) and attaches
-them to a Gitea release.
+Woodpecker pipeline runs goreleaser, which attaches `encapic_linux_amd64`
+(+ `.sha256`) and the RPM to a Gitea release, and then publishes the RPM to the
+artifactapi `rpm-internal` yum repo.
+
+## Installation
+
+The kubernetes compilers fetch `encapic_linux_amd64` from the Gitea release in
+an initContainer and install it to `/opt/bin/encapic`.
+
+The VM puppet masters install the RPM from `rpm-internal`:
+
+```
+dnf install encapic
+```
+
+It ships three paths:
+
+- `/usr/bin/encapic` — the binary;
+- `/usr/bin/encapic-enc` — the ENC entrypoint. Puppet's exec `node_terminus`
+  invokes `external_nodes` with a certname and no environment, so the shim
+  sources the URL before exec'ing the binary. Point `external_nodes` at this,
+  not at `/usr/bin/encapic`;
+- `/etc/encapic/encapic.conf` — `ENCAPI_URL=...`, defaulting to the external
+  address `https://encapi.example.com` because a VM cannot resolve
+  the in-cluster default. Shipped `%config(noreplace)` so puppet may own its
+  contents without an upgrade reverting them.
