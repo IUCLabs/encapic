@@ -3,7 +3,7 @@ when:
 
 steps:
   - name: build
-    image: "artifactapi.example.com/docker-internal/gobuilder:0.1.2-alma9"
+    image: "artifactapi.example.com/docker-internal/gobuilder:0.1.3-alma9"
     environment:
       GOCACHE_S3_BUCKET: gocache
       GOCACHE_S3_REGION: us-east-1
@@ -31,7 +31,7 @@ steps:
   # The release itself only runs on a tag, so validate the packaging config and
   # build the artifacts (binary + RPM) here without publishing anything.
   - name: package
-    image: "artifactapi.example.com/docker-internal/gobuilder:0.1.2-alma9"
+    image: "artifactapi.example.com/docker-internal/gobuilder:0.1.3-alma9"
     environment:
       GOCACHE_S3_BUCKET: gocache
       GOCACHE_S3_REGION: us-east-1
