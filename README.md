@@ -29,6 +29,25 @@ exec `node_terminus` fails safe rather than compiling an empty catalog.
   `http://encapi.encapi.svc.cluster.local` (the in-cluster service).
 - The HTTP request has a 10s timeout.
 
+### Pinning a host to `testing`
+
+```
+encapic set-testing <certname>
+```
+
+Sets the node's environment to `testing` in encapi (requires the encapi
+oidc-auth release). A `testing` node's ENC omits `environment`, so any
+`puppet agent --environment X` is honoured; the host stays in `testing` until
+the next terragrunt-enc apply resets it.
+
+It mints a JWT from `${VAULT_ADDR}/v1/identity/oidc/token/${ENCAPI_OIDC_ROLE}`
+(defaults `https://vault.example.com:8200`, `encapi-testing`) using
+`VAULT_TOKEN` or `~/.vault-token`, trusting `VAULT_CACERT` when set, then
+`PUT`s `{"environment":"testing"}` to
+`${ENCAPI_URL}/api/v1/nodes/<certname>/environment`. `ENCAPI_URL` and
+`VAULT_ADDR` must be `https` and redirects are never followed, so neither
+the Vault token nor the JWT is sent over plain http or to another host.
+
 ## Behaviour (drop-in for the python ENC)
 
 encapic reproduces the previous python script byte-for-byte:
