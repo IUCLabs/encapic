@@ -58,8 +58,11 @@ func run(args []string, out io.Writer) error {
 		_, err := fmt.Fprintf(out, "encapic %s\n", version)
 		return err
 	}
+	if len(args) == 3 && args[1] == "set-testing" {
+		return setTesting(args[2], out)
+	}
 	if len(args) != 2 {
-		return fmt.Errorf("usage: %s <certname>", args[0])
+		return fmt.Errorf("usage: %s <certname> | %s set-testing <certname>", args[0], args[0])
 	}
 	certname := args[1]
 
