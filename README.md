@@ -44,7 +44,8 @@ It mints a JWT from `${VAULT_ADDR}/v1/identity/oidc/token/${ENCAPI_OIDC_ROLE}`
 (defaults `https://vault.example.com:8200`, `encapi-testing`) using
 `VAULT_TOKEN` or `~/.vault-token`, trusting `VAULT_CACERT` when set, then
 `PUT`s `{"environment":"testing"}` to
-`${ENCAPI_URL}/api/v1/nodes/<certname>/environment`.
+`${ENCAPI_URL}/api/v1/nodes/<certname>/environment`. `ENCAPI_URL` must be
+`https`; the bearer JWT is never sent over plain http.
 
 ## Behaviour (drop-in for the python ENC)
 

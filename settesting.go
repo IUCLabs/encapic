@@ -20,6 +20,13 @@ const defaultVaultAddr = "https://vault.example.com:8200"
 // setTesting pins certname to the testing environment via encapi, using a
 // Vault identity OIDC token for the encapi-testing role.
 func setTesting(certname string, out io.Writer) error {
+	baseURL := os.Getenv("ENCAPI_URL")
+	if baseURL == "" {
+		baseURL = defaultBaseURL
+	}
+	if parsed, err := url.Parse(baseURL); err != nil || parsed.Scheme != "https" {
+		return fmt.Errorf("set-testing requires an https ENCAPI_URL, got %q", baseURL)
+	}
 	client, err := vaultClient()
 	if err != nil {
 		return err
@@ -29,10 +36,6 @@ func setTesting(certname string, out io.Writer) error {
 		return err
 	}
 
-	baseURL := os.Getenv("ENCAPI_URL")
-	if baseURL == "" {
-		baseURL = defaultBaseURL
-	}
 	u := strings.TrimRight(baseURL, "/") + "/api/v1/nodes/" + url.PathEscape(certname) + "/environment"
 	req, err := http.NewRequest(http.MethodPut, u, bytes.NewBufferString(`{"environment":"testing"}`))
 	if err != nil {
