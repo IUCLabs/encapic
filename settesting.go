@@ -24,8 +24,8 @@ func setTesting(certname string, out io.Writer) error {
 	if baseURL == "" {
 		baseURL = defaultBaseURL
 	}
-	if parsed, err := url.Parse(baseURL); err != nil || parsed.Scheme != "https" {
-		return fmt.Errorf("set-testing requires an https ENCAPI_URL, got %q", baseURL)
+	if err := requireHTTPS("ENCAPI_URL", baseURL); err != nil {
+		return err
 	}
 	client, err := vaultClient()
 	if err != nil {
@@ -54,6 +54,9 @@ func mintToken(client *http.Client) (string, error) {
 	addr := os.Getenv("VAULT_ADDR")
 	if addr == "" {
 		addr = defaultVaultAddr
+	}
+	if err := requireHTTPS("VAULT_ADDR", addr); err != nil {
+		return "", err
 	}
 	role := os.Getenv("ENCAPI_OIDC_ROLE")
 	if role == "" {
@@ -86,6 +89,13 @@ func mintToken(client *http.Client) (string, error) {
 	return resp.Data.Token, nil
 }
 
+func requireHTTPS(name, raw string) error {
+	if parsed, err := url.Parse(raw); err != nil || parsed.Scheme != "https" {
+		return fmt.Errorf("set-testing requires an https %s, got %q", name, raw)
+	}
+	return nil
+}
+
 func readVaultToken() (string, error) {
 	if t := os.Getenv("VAULT_TOKEN"); t != "" {
 		return t, nil
@@ -102,7 +112,11 @@ func readVaultToken() (string, error) {
 }
 
 func vaultClient() (*http.Client, error) {
-	client := &http.Client{Timeout: httpTimeout}
+	client := &http.Client{
+		Timeout: httpTimeout,
+		// Never follow redirects: they would re-send the vault token or JWT.
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
 	caFile := os.Getenv("VAULT_CACERT")
 	if caFile == "" {
 		return client, nil

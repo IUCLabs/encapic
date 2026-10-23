@@ -14,7 +14,7 @@ import (
 
 func fakeVault(t *testing.T, status int, body string) *httptest.Server {
 	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet || r.URL.Path != "/v1/identity/oidc/token/encapi-testing" {
 			http.NotFound(w, r)
 			return
@@ -27,6 +27,7 @@ func fakeVault(t *testing.T, status int, body string) *httptest.Server {
 		_, _ = io.WriteString(w, body)
 	}))
 	t.Cleanup(srv.Close)
+	trustServer(t, srv)
 	return srv
 }
 
@@ -47,7 +48,8 @@ func fakeEncapi(t *testing.T, status int, seen *seenPut) *httptest.Server {
 	return srv
 }
 
-// trustServer points VAULT_CACERT at the TLS server's certificate.
+// trustServer points VAULT_CACERT at the TLS server's certificate; all
+// httptest TLS servers share one certificate, so this trusts both fakes.
 func trustServer(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "ca.pem")
@@ -136,6 +138,46 @@ func TestSetTestingRefusesPlainHTTP(t *testing.T) {
 	}
 	if vaultHit {
 		t.Error("vault called despite non-https ENCAPI_URL")
+	}
+}
+
+func TestSetTestingRefusesPlainHTTPVault(t *testing.T) {
+	vaultHit := false
+	vault := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { vaultHit = true }))
+	t.Cleanup(vault.Close)
+	var seen seenPut
+	t.Setenv("ENCAPI_URL", fakeEncapi(t, 200, &seen).URL)
+	t.Setenv("VAULT_TOKEN", "vt")
+
+	for _, addr := range []string{vault.URL, "vault.example:8200", "://bad"} {
+		t.Setenv("VAULT_ADDR", addr)
+		err := run([]string{"encapic", "set-testing", "host.example"}, io.Discard)
+		if err == nil || !strings.Contains(err.Error(), "requires an https VAULT_ADDR") {
+			t.Errorf("VAULT_ADDR=%q: err = %v, want https refusal", addr, err)
+		}
+	}
+	if vaultHit || seen.path != "" {
+		t.Errorf("request sent despite non-https VAULT_ADDR: vault=%v encapi=%+v", vaultHit, seen)
+	}
+}
+
+func TestSetTestingDoesNotFollowRedirect(t *testing.T) {
+	var hits []string
+	encapi := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits = append(hits, r.URL.Path+" "+r.Header.Get("Authorization"))
+		http.Redirect(w, r, "/elsewhere", http.StatusTemporaryRedirect)
+	}))
+	t.Cleanup(encapi.Close)
+	t.Setenv("VAULT_ADDR", fakeVault(t, 200, `{"data":{"token":"jwt123"}}`).URL)
+	t.Setenv("VAULT_TOKEN", "vt")
+	t.Setenv("ENCAPI_URL", encapi.URL)
+
+	err := run([]string{"encapic", "set-testing", "host.example"}, io.Discard)
+	if err == nil || !strings.Contains(err.Error(), "HTTP 307") {
+		t.Fatalf("err = %v, want HTTP 307", err)
+	}
+	if len(hits) != 1 {
+		t.Errorf("encapi requests = %v, want exactly one", hits)
 	}
 }
 
