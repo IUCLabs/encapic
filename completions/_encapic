@@ -2,7 +2,7 @@
 
 _encapic() {
 	case $CURRENT in
-	2) compadd -- init set-testing completion help --help --version ;;
+	2) compadd -- init set-testing unset-testing completion help --help --version ;;
 	3) [[ $words[2] == completion ]] && compadd -- bash zsh ;;
 	4) [[ $words[2] == completion ]] && compadd -- --install ;;
 	esac

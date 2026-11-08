@@ -120,7 +120,7 @@ func TestRunHelp(t *testing.T) {
 		if err := run([]string{"encapic", arg}, &out); err != nil {
 			t.Fatalf("%s: %v", arg, err)
 		}
-		for _, want := range []string{"<certname>", "set-testing", "init", "completion bash|zsh [--install]", "--version", "ENCAPI_URL"} {
+		for _, want := range []string{"<certname>", "set-testing", "unset-testing", "init", "completion bash|zsh [--install]", "--version", "ENCAPI_URL"} {
 			if !strings.Contains(out.String(), want) {
 				t.Errorf("%s output missing %q", arg, want)
 			}

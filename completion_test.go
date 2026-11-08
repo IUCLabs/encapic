@@ -17,7 +17,7 @@ func TestCompletionPrint(t *testing.T) {
 		if !strings.Contains(out.String(), marker) {
 			t.Errorf("%s script missing %q", shell, marker)
 		}
-		for _, word := range []string{"init", "set-testing", "completion", "bash zsh", "--install"} {
+		for _, word := range []string{"init", "set-testing", "unset-testing", "completion", "bash zsh", "--install"} {
 			if !strings.Contains(out.String(), word) {
 				t.Errorf("%s script does not complete %q", shell, word)
 			}

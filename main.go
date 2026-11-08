@@ -47,6 +47,7 @@ const httpTimeout = 10 * time.Second
 const usage = `usage:
   encapic <certname>                         print the Puppet ENC YAML for certname
   encapic set-testing <certname>             pin certname to the testing environment
+  encapic unset-testing <certname>           restore certname's pre-testing environment
   encapic init                               write ~/.config/encapi/encapic.conf
   encapic completion bash|zsh [--install]    print or install shell completion
   encapic -h | --help | help                 show this help
@@ -83,6 +84,9 @@ func run(args []string, out io.Writer) error {
 	}
 	if len(args) == 3 && args[1] == "set-testing" {
 		return setTesting(args[2], out)
+	}
+	if len(args) == 3 && args[1] == "unset-testing" {
+		return unsetTesting(args[2], out)
 	}
 	if len(args) != 2 || strings.HasPrefix(args[1], "-") {
 		return fmt.Errorf("invalid arguments %q\n%s", args[1:], strings.TrimSuffix(usage, "\n"))
