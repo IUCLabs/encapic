@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const initDefaultURL = "https://encapi"
+const initDefaultURL = "https://encapi.example.com"
 
 // systemConfPaths follow the user conf in precedence; the legacy path is a
 // read-only fallback for hosts whose puppet still manages it.

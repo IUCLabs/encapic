@@ -71,7 +71,7 @@ func TestInitConfig(t *testing.T) {
 		name, input, want string
 		wantErr           bool
 	}{
-		{"default", "\nn\n", "ENCAPI_URL=https://encapi\n", false},
+		{"default", "\nn\n", "ENCAPI_URL=https://encapi.example.com\n", false},
 		{"custom", "http://encapi.example:8080\nn\n", "ENCAPI_URL=http://encapi.example:8080\n", false},
 		{"invalid", "ftp://nope\n", "", true},
 		{"no host", "encapi.example\n", "", true},
@@ -94,7 +94,7 @@ func TestInitConfig(t *testing.T) {
 			if string(b) != tc.want {
 				t.Errorf("conf = %q, want %q", b, tc.want)
 			}
-			if !strings.Contains(out.String(), "encapi URL [https://encapi]: ") {
+			if !strings.Contains(out.String(), "encapi URL [https://encapi.example.com]: ") {
 				t.Errorf("missing URL prompt in %q", out.String())
 			}
 			fi, err := os.Stat(filepath.Dir(userConfPath()))

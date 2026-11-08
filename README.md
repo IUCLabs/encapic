@@ -40,8 +40,9 @@ The encapi base URL comes from the first of:
 5. the compiled-in default `http://encapi.encapi.svc.cluster.local`.
 
 Conf files are shell-sourceable `KEY=VALUE` (`ENCAPI_URL=https://...`).
-`encapic init` prompts for the URL, writes the user conf and offers to install
-shell completion. With no config found, an interactive run prints a hint to
+`encapic init` prompts for the URL (default
+`https://encapi.example.com`), writes the user conf and offers to
+install shell completion. With no config found, an interactive run prints a hint to
 stderr; non-TTY runs (the puppet exec ENC) stay silent.
 
 ### Shell completion
