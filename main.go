@@ -38,11 +38,23 @@ import (
 var version = "dev"
 
 // defaultBaseURL is compiled in and points at the in-cluster encapi service. It
-// is overridden by the ENCAPI_URL environment variable when set.
+// is overridden by ENCAPI_URL from the environment or a conf file.
 const defaultBaseURL = "http://encapi.encapi.svc.cluster.local"
 
 // httpTimeout bounds the whole request; the puppet exec ENC must not hang.
 const httpTimeout = 10 * time.Second
+
+const usage = `usage:
+  encapic <certname>                         print the Puppet ENC YAML for certname
+  encapic set-testing <certname>             pin certname to the testing environment
+  encapic init                               write ~/.config/encapi/encapic.conf
+  encapic completion bash|zsh [--install]    print or install shell completion
+  encapic -h | --help | help                 show this help
+  encapic -v | --version                     show the version
+
+ENCAPI_URL is read from the environment, then ~/.config/encapi/encapic.conf,
+/etc/encapi/encapic.conf, /etc/encapic/encapic.conf, else the in-cluster default.
+`
 
 func main() {
 	if err := run(os.Args, os.Stdout); err != nil {
@@ -54,22 +66,29 @@ func main() {
 // run is the testable entry point. It writes the ENC YAML to out and returns a
 // non-nil error on any failure.
 func run(args []string, out io.Writer) error {
-	if len(args) == 2 && (args[1] == "-v" || args[1] == "--version") {
-		_, err := fmt.Fprintf(out, "encapic %s\n", version)
-		return err
+	if len(args) == 2 {
+		switch args[1] {
+		case "-v", "--version":
+			_, err := fmt.Fprintf(out, "encapic %s\n", version)
+			return err
+		case "-h", "--help", "help":
+			_, err := io.WriteString(out, usage)
+			return err
+		case "init":
+			return initConfig(os.Stdin, out)
+		}
+	}
+	if len(args) >= 2 && args[1] == "completion" {
+		return completion(args[2:], out)
 	}
 	if len(args) == 3 && args[1] == "set-testing" {
 		return setTesting(args[2], out)
 	}
-	if len(args) != 2 {
-		return fmt.Errorf("usage: %s <certname> | %s set-testing <certname>", args[0], args[0])
+	if len(args) != 2 || strings.HasPrefix(args[1], "-") {
+		return fmt.Errorf("invalid arguments %q\n%s", args[1:], strings.TrimSuffix(usage, "\n"))
 	}
 	certname := args[1]
-
-	baseURL := os.Getenv("ENCAPI_URL")
-	if baseURL == "" {
-		baseURL = defaultBaseURL
-	}
+	baseURL := baseURL()
 
 	body, err := fetch(baseURL, certname)
 	if err != nil {

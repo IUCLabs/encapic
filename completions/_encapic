@@ -1,0 +1,15 @@
+#compdef encapic
+
+_encapic() {
+	case $CURRENT in
+	2) compadd -- init set-testing completion help --help --version ;;
+	3) [[ $words[2] == completion ]] && compadd -- bash zsh ;;
+	4) [[ $words[2] == completion ]] && compadd -- --install ;;
+	esac
+}
+
+if [[ $funcstack[1] == _encapic ]]; then
+	_encapic "$@"
+else
+	compdef _encapic encapic
+fi

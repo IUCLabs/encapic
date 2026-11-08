@@ -25,9 +25,33 @@ reshapes it, and prints the resulting ENC YAML to stdout. It exits non-zero on
 any HTTP or parse failure — including a 404 for an unknown node — so the puppet
 exec `node_terminus` fails safe rather than compiling an empty catalog.
 
-- `ENCAPI_URL` overrides the encapi base URL. The compiled-in default is
-  `http://encapi.encapi.svc.cluster.local` (the in-cluster service).
 - The HTTP request has a 10s timeout.
+
+`encapic --help` lists every command.
+
+### Configuration
+
+The encapi base URL comes from the first of:
+
+1. the `ENCAPI_URL` environment variable;
+2. `${XDG_CONFIG_HOME:-~/.config}/encapi/encapic.conf`;
+3. `/etc/encapi/encapic.conf`;
+4. `/etc/encapic/encapic.conf` (legacy, read-only fallback);
+5. the compiled-in default `http://encapi.encapi.svc.cluster.local`.
+
+Conf files are shell-sourceable `KEY=VALUE` (`ENCAPI_URL=https://...`).
+`encapic init` prompts for the URL, writes the user conf and offers to install
+shell completion. With no config found, an interactive run prints a hint to
+stderr; non-TTY runs (the puppet exec ENC) stay silent.
+
+### Shell completion
+
+```
+encapic completion bash|zsh            # print the script
+encapic completion bash|zsh --install  # install under ${XDG_DATA_HOME:-~/.local/share}
+```
+
+The RPM also installs both scripts system-wide.
 
 ### Pinning a host to `testing`
 
@@ -107,14 +131,16 @@ The VM puppet masters install the RPM from `rpm-internal`:
 dnf install encapic
 ```
 
-It ships three paths:
+It ships:
 
 - `/usr/bin/encapic` — the binary;
 - `/usr/bin/encapic-enc` — the ENC entrypoint. Puppet's exec `node_terminus`
   invokes `external_nodes` with a certname and no environment, so the shim
   sources the URL before exec'ing the binary. Point `external_nodes` at this,
   not at `/usr/bin/encapic`;
-- `/etc/encapic/encapic.conf` — `ENCAPI_URL=...`, defaulting to the external
+- `/etc/encapi/encapic.conf` — `ENCAPI_URL=...`, defaulting to the external
   address `https://encapi.example.com` because a VM cannot resolve
   the in-cluster default. Shipped `%config(noreplace)` so puppet may own its
-  contents without an upgrade reverting them.
+  contents without an upgrade reverting them. The shim and binary still read
+  the legacy `/etc/encapic/encapic.conf` as a fallback;
+- bash and zsh completion scripts.

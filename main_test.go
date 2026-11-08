@@ -107,6 +107,27 @@ func TestRunUsage(t *testing.T) {
 	}
 }
 
+func TestRunUnknownFlag(t *testing.T) {
+	err := run([]string{"encapic", "--bogus"}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "usage:") {
+		t.Fatalf("err = %v, want usage error", err)
+	}
+}
+
+func TestRunHelp(t *testing.T) {
+	for _, arg := range []string{"-h", "--help", "help"} {
+		var out bytes.Buffer
+		if err := run([]string{"encapic", arg}, &out); err != nil {
+			t.Fatalf("%s: %v", arg, err)
+		}
+		for _, want := range []string{"<certname>", "set-testing", "init", "completion bash|zsh [--install]", "--version", "ENCAPI_URL"} {
+			if !strings.Contains(out.String(), want) {
+				t.Errorf("%s output missing %q", arg, want)
+			}
+		}
+	}
+}
+
 func TestRunVersion(t *testing.T) {
 	var out bytes.Buffer
 	if err := run([]string{"encapic", "--version"}, &out); err != nil {

@@ -50,8 +50,16 @@ nfpms:
       # noreplace: puppet manages this file's contents (hiera-driven URL), so an
       # upgrade must not overwrite it.
       - src: packaging/encapic.conf
-        dst: /etc/encapic/encapic.conf
+        dst: /etc/encapi/encapic.conf
         type: "config|noreplace"
+        file_info:
+          mode: 0644
+      - src: completions/encapic.bash
+        dst: /usr/share/bash-completion/completions/encapic
+        file_info:
+          mode: 0644
+      - src: completions/_encapic
+        dst: /usr/share/zsh/site-functions/_encapic
         file_info:
           mode: 0644
 
