@@ -3,11 +3,9 @@
 # environment, so the encapi URL cannot be inherited; source it here instead.
 set -eu
 
-for conf in /etc/encapic/encapic.conf /etc/encapi/encapic.conf; do
-	if [ -r "$conf" ]; then
-		. "$conf"
-	fi
-done
+if [ -r /etc/encapi/encapic.conf ]; then
+	. /etc/encapi/encapic.conf
+fi
 if [ -n "${ENCAPI_URL:-}" ]; then
 	export ENCAPI_URL
 fi

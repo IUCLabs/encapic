@@ -36,8 +36,7 @@ The encapi base URL comes from the first of:
 1. the `ENCAPI_URL` environment variable;
 2. `${XDG_CONFIG_HOME:-~/.config}/encapi/encapic.conf`;
 3. `/etc/encapi/encapic.conf`;
-4. `/etc/encapic/encapic.conf` (legacy, shipped by the RPM);
-5. the compiled-in default `http://encapi.encapi.svc.cluster.local`.
+4. the compiled-in default `http://encapi.encapi.svc.cluster.local`.
 
 Conf files are shell-sourceable `KEY=VALUE` (`ENCAPI_URL=https://...`).
 `encapic init` prompts for the URL (default
@@ -148,11 +147,6 @@ It ships:
 - `/usr/bin/encapic` — the binary;
 - `/usr/bin/encapic-enc` — the ENC entrypoint. Puppet's exec `node_terminus`
   invokes `external_nodes` with a certname and no environment, so the shim
-  sources the URL before exec'ing the binary. Point `external_nodes` at this,
-  not at `/usr/bin/encapic`;
-- `/etc/encapic/encapic.conf` — `ENCAPI_URL=...`, defaulting to the external
-  address `https://encapi.example.com` because a VM cannot resolve
-  the in-cluster default. Shipped `%config(noreplace)` so puppet may own its
-  contents without an upgrade reverting them. A `/etc/encapi/encapic.conf`, when
-  present, takes precedence in both the shim and the binary;
+  sources the puppet-managed `/etc/encapi/encapic.conf` before exec'ing the
+  binary. Point `external_nodes` at this, not at `/usr/bin/encapic`;
 - bash and zsh completion scripts.
