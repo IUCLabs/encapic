@@ -53,11 +53,15 @@ func resolveBaseURL() (string, bool) {
 func baseURL() string {
 	u, found := resolveBaseURL()
 	if !found {
-		if fi, err := os.Stderr.Stat(); err == nil && fi.Mode()&os.ModeCharDevice != 0 {
-			fmt.Fprintln(os.Stderr, "hint: no config found, run 'encapic init'")
-		}
+		noConfigHint(os.Stderr)
 	}
 	return u
+}
+
+func noConfigHint(f *os.File) {
+	if fi, err := f.Stat(); err == nil && fi.Mode()&os.ModeCharDevice != 0 {
+		_, _ = fmt.Fprintln(f, "hint: no config found, run 'encapic init'")
+	}
 }
 
 func readConfURL(path string) string {

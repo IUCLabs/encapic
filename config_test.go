@@ -155,3 +155,15 @@ func TestInitInstallsCompletion(t *testing.T) {
 		t.Errorf("no skip note for fish in %q", out.String())
 	}
 }
+
+func TestNoConfigHintSilentWithoutTTY(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "stderr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = f.Close() }()
+	noConfigHint(f)
+	if fi, err := f.Stat(); err != nil || fi.Size() != 0 {
+		t.Errorf("hint written to non-TTY stderr (size %d, %v)", fi.Size(), err)
+	}
+}
