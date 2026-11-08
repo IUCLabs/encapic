@@ -25,9 +25,34 @@ reshapes it, and prints the resulting ENC YAML to stdout. It exits non-zero on
 any HTTP or parse failure — including a 404 for an unknown node — so the puppet
 exec `node_terminus` fails safe rather than compiling an empty catalog.
 
-- `ENCAPI_URL` overrides the encapi base URL. The compiled-in default is
-  `http://encapi.encapi.svc.cluster.local` (the in-cluster service).
 - The HTTP request has a 10s timeout.
+
+`encapic --help` lists every command.
+
+### Configuration
+
+The encapi base URL comes from the first of:
+
+1. the `ENCAPI_URL` environment variable;
+2. `${XDG_CONFIG_HOME:-~/.config}/encapi/encapic.conf`;
+3. `/etc/encapi/encapic.conf`;
+4. `/etc/encapic/encapic.conf` (legacy, shipped by the RPM);
+5. the compiled-in default `http://encapi.encapi.svc.cluster.local`.
+
+Conf files are shell-sourceable `KEY=VALUE` (`ENCAPI_URL=https://...`).
+`encapic init` prompts for the URL (default
+`https://encapi.example.com`), writes the user conf and offers to
+install shell completion. With no config found, an interactive run prints a hint to
+stderr; non-TTY runs (the puppet exec ENC) stay silent.
+
+### Shell completion
+
+```
+encapic completion bash|zsh            # print the script
+encapic completion bash|zsh --install  # install under ${XDG_DATA_HOME:-~/.local/share}
+```
+
+The RPM also installs both scripts system-wide.
 
 ### Pinning a host to `testing`
 
@@ -47,6 +72,17 @@ It mints a JWT from `${VAULT_ADDR}/v1/identity/oidc/token/${ENCAPI_OIDC_ROLE}`
 `${ENCAPI_URL}/api/v1/nodes/<certname>/environment`. `ENCAPI_URL` and
 `VAULT_ADDR` must be `https` and redirects are never followed, so neither
 the Vault token nor the JWT is sent over plain http or to another host.
+
+### Restoring a host from `testing`
+
+```
+encapic unset-testing <certname>
+```
+
+Restores the environment the node had before `set-testing` and prints it
+(requires the encapi testing-restore endpoint). It authenticates like
+`set-testing` and sends `DELETE ${ENCAPI_URL}/api/v1/nodes/<certname>/environment/testing`;
+a node that is not in `testing` fails with encapi's error message.
 
 ## Behaviour (drop-in for the python ENC)
 
@@ -107,7 +143,7 @@ The VM puppet masters install the RPM from `rpm-internal`:
 dnf install encapic
 ```
 
-It ships three paths:
+It ships:
 
 - `/usr/bin/encapic` — the binary;
 - `/usr/bin/encapic-enc` — the ENC entrypoint. Puppet's exec `node_terminus`
@@ -117,4 +153,6 @@ It ships three paths:
 - `/etc/encapic/encapic.conf` — `ENCAPI_URL=...`, defaulting to the external
   address `https://encapi.example.com` because a VM cannot resolve
   the in-cluster default. Shipped `%config(noreplace)` so puppet may own its
-  contents without an upgrade reverting them.
+  contents without an upgrade reverting them. A `/etc/encapi/encapic.conf`, when
+  present, takes precedence in both the shim and the binary;
+- bash and zsh completion scripts.
