@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -20,31 +19,58 @@ const defaultVaultAddr = "https://vault.example.com:8200"
 // setTesting pins certname to the testing environment via encapi, using a
 // Vault identity OIDC token for the encapi-testing role.
 func setTesting(certname string, out io.Writer) error {
+	if _, err := encapiEnvironment(http.MethodPut, certname, "", `{"environment":"testing"}`); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(out, "%s set to testing\n", certname)
+	return err
+}
+
+// unsetTesting restores certname to the environment it had before set-testing.
+func unsetTesting(certname string, out io.Writer) error {
+	body, err := encapiEnvironment(http.MethodDelete, certname, "/testing", "")
+	if err != nil {
+		return err
+	}
+	var node struct {
+		Environment string `json:"environment"`
+	}
+	if err := json.Unmarshal(body, &node); err != nil {
+		return fmt.Errorf("decode encapi node response: %w", err)
+	}
+	if node.Environment == "" {
+		return errors.New("encapi returned no environment")
+	}
+	_, err = fmt.Fprintf(out, "%s restored to %s\n", certname, node.Environment)
+	return err
+}
+
+// encapiEnvironment sends an authenticated request to the node's
+// /environment<suffix> endpoint and returns the response body.
+func encapiEnvironment(method, certname, suffix, body string) ([]byte, error) {
 	baseURL := baseURL()
 	if err := requireHTTPS("ENCAPI_URL", baseURL); err != nil {
-		return err
+		return nil, err
 	}
 	client, err := vaultClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	jwt, err := mintToken(client)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	u := strings.TrimRight(baseURL, "/") + "/api/v1/nodes/" + url.PathEscape(certname) + "/environment"
-	req, err := http.NewRequest(http.MethodPut, u, bytes.NewBufferString(`{"environment":"testing"}`))
+	u := strings.TrimRight(baseURL, "/") + "/api/v1/nodes/" + url.PathEscape(certname) + "/environment" + suffix
+	req, err := http.NewRequest(method, u, strings.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+jwt)
-	req.Header.Set("Content-Type", "application/json")
-	if _, err := do(client, req); err != nil {
-		return err
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
 	}
-	_, err = fmt.Fprintf(out, "%s set to testing\n", certname)
-	return err
+	return do(client, req)
 }
 
 func mintToken(client *http.Client) (string, error) {
@@ -88,7 +114,7 @@ func mintToken(client *http.Client) (string, error) {
 
 func requireHTTPS(name, raw string) error {
 	if parsed, err := url.Parse(raw); err != nil || parsed.Scheme != "https" {
-		return fmt.Errorf("set-testing requires an https %s, got %q", name, raw)
+		return fmt.Errorf("encapic requires an https %s, got %q", name, raw)
 	}
 	return nil
 }

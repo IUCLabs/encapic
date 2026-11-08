@@ -73,6 +73,17 @@ It mints a JWT from `${VAULT_ADDR}/v1/identity/oidc/token/${ENCAPI_OIDC_ROLE}`
 `VAULT_ADDR` must be `https` and redirects are never followed, so neither
 the Vault token nor the JWT is sent over plain http or to another host.
 
+### Restoring a host from `testing`
+
+```
+encapic unset-testing <certname>
+```
+
+Restores the environment the node had before `set-testing` and prints it
+(requires the encapi testing-restore endpoint). It authenticates like
+`set-testing` and sends `DELETE ${ENCAPI_URL}/api/v1/nodes/<certname>/environment/testing`;
+a node that is not in `testing` fails with encapi's error message.
+
 ## Behaviour (drop-in for the python ENC)
 
 encapic reproduces the previous python script byte-for-byte:
