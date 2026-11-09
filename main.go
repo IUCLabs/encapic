@@ -54,7 +54,7 @@ const usage = `usage:
   encapic -v | --version                     show the version
 
 ENCAPI_URL is read from the environment, then ~/.config/encapi/encapic.conf,
-/etc/encapi/encapic.conf, /etc/encapic/encapic.conf, else the in-cluster default.
+/etc/encapi/encapic.conf, else the in-cluster default.
 `
 
 func main() {

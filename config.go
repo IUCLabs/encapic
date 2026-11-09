@@ -13,9 +13,7 @@ import (
 
 const initDefaultURL = "https://encapi.example.com"
 
-// systemConfPaths follow the user conf in precedence; the legacy path is a
-// read-only fallback for hosts whose puppet still manages it.
-var systemConfPaths = []string{"/etc/encapi/encapic.conf", "/etc/encapic/encapic.conf"}
+var systemConfPath = "/etc/encapi/encapic.conf"
 
 func xdgDir(env, fallback string) string {
 	if d := os.Getenv(env); d != "" {
@@ -42,7 +40,7 @@ func resolveBaseURL() (string, bool) {
 	if u := os.Getenv("ENCAPI_URL"); u != "" {
 		return u, true
 	}
-	for _, p := range append([]string{userConfPath()}, systemConfPaths...) {
+	for _, p := range []string{userConfPath(), systemConfPath} {
 		if u := readConfURL(p); u != "" {
 			return u, true
 		}

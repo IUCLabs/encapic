@@ -13,7 +13,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	systemConfPaths = nil
+	systemConfPath = ""
 	_ = os.Unsetenv("ENCAPI_URL")
 	_ = os.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "config"))
 	_ = os.Setenv("XDG_DATA_HOME", filepath.Join(dir, "data"))
@@ -37,10 +37,9 @@ func TestResolveBaseURLPrecedence(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "user"))
 	user := filepath.Join(dir, "user", "encapi", "encapic.conf")
 	system := filepath.Join(dir, "etc", "encapi", "encapic.conf")
-	legacy := filepath.Join(dir, "etc", "encapic", "encapic.conf")
-	old := systemConfPaths
-	systemConfPaths = []string{system, legacy}
-	t.Cleanup(func() { systemConfPaths = old })
+	old := systemConfPath
+	systemConfPath = system
+	t.Cleanup(func() { systemConfPath = old })
 
 	check := func(want string, wantFound bool) {
 		t.Helper()
@@ -52,8 +51,6 @@ func TestResolveBaseURLPrecedence(t *testing.T) {
 
 	t.Setenv("ENCAPI_URL", "")
 	check(defaultBaseURL, false)
-	writeConf(t, legacy, "ENCAPI_URL=https://legacy\n")
-	check("https://legacy", true)
 	writeConf(t, system, "# comment\nENCAPI_URL=\"https://system\"\n")
 	check("https://system", true)
 	writeConf(t, user, "OTHER=x\nexport ENCAPI_URL='https://user'\n")
