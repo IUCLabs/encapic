@@ -126,10 +126,10 @@ make fmt     # gofmt -w .
 make rpm     # binary + RPM into dist/ via goreleaser, publishing nothing
 ```
 
-Release: `make minor` (etc.) tags `vX.Y.Z` and pushes it; the `release`
-Woodpecker pipeline runs goreleaser, which attaches `encapic_linux_amd64`
-(+ `.sha256`) and the RPM to a Gitea release, and then publishes the RPM to the
-artifactapi `rpm-internal` yum repo.
+Release: `make minor` (etc.) tags `vX.Y.Z` and pushes it; the tag mirrors to
+GitHub, where the `release` workflow runs goreleaser, which attaches
+`encapic_linux_amd64` and the RPM (each with a signed `.sha256`) to the GitHub
+release.
 
 ## Installation
 
