@@ -62,14 +62,10 @@ checksum:
   split: true
   name_template: "{{ .ArtifactName }}.sha256"
 
-release:
-  gitea:
-    owner: myorg
-    name: encapic
-
-gitea_urls:
-  api: https://git.example.com/api/v1
-  download: https://git.example.com
+signs:
+  - artifacts: checksum
+    cmd: scripts/sign.sh
+    args: ["${artifact}", "${signature}"]
 
 changelog:
   sort: asc

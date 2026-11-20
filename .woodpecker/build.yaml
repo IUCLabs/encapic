@@ -47,7 +47,7 @@ steps:
       - git fetch --tags --force
       - go install github.com/goreleaser/goreleaser/v2@v2.17.1
       - goreleaser check
-      - goreleaser release --snapshot --clean
+      - goreleaser release --snapshot --clean --skip=sign
       - ls -l dist/*.rpm dist/*.sha256
     depends_on: [build]
     backend_options:
