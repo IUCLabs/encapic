@@ -38,7 +38,7 @@ rpm: rpm-package
 # goreleaser drives the build and the nfpm packaging in one pass, so packaging
 # an already-built binary is not a separate step.
 rpm-package:
-	goreleaser release --snapshot --clean
+	GOTOOLCHAIN=auto go run github.com/goreleaser/goreleaser/v2@v2.20.2 release --snapshot --clean --skip=sign
 
 # Bump helpers — read the latest semver tag and create the next one.
 # If no tag exists yet, start from v0.0.0.
