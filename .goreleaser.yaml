@@ -67,10 +67,9 @@ signs:
     cmd: scripts/sign.sh
     args: ["${artifact}", "${signature}"]
 
+release:
+  use_existing_draft: true
+  mode: keep-existing
+
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
+  disable: true
