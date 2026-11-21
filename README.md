@@ -126,10 +126,10 @@ make fmt     # gofmt -w .
 make rpm     # binary + RPM into dist/ via goreleaser, publishing nothing
 ```
 
-Release: `make minor` (etc.) tags `vX.Y.Z` and pushes it; the tag mirrors to
-GitHub, where the `release` workflow runs goreleaser, which attaches
-`encapic_linux_amd64` and the RPM (each with a signed `.sha256`) to the GitHub
-release.
+Release: `make minor` (etc.) on a clean, up-to-date `main` drafts the GitHub
+release `vX.Y.Z` with generated notes and pushes the tag; the `release`
+workflow runs goreleaser, which attaches `encapic_linux_amd64` and the RPM
+(each with a signed `.sha256`) to the draft and publishes it.
 
 ## Installation
 
